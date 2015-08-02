@@ -1,3 +1,19 @@
+/**
+ * PIP Tiling (max 2 pips visible at a time)
+ *
+ *  +----------+----------+ +-----------+----------+
+ *  |                     | |                      |
+ *  |                     | |                      |
+ *  |                     | |                      |
+ *  |          +---------++ ++---------++---------+|
+ *  |          |         || ||         ||         ||
+ *  |          |         || ||         ||         ||
+ *  |          |         || ||         ||         ||
+ *  |          +---------+| |+---------++---------+|
+ *  +---------------------+ +----------------------+
+ *        2 windows               3 windows
+ */
+
 module.exports = function(dependencies) {
   // modules
   var NWM = dependencies.NWM,
@@ -5,6 +21,50 @@ module.exports = function(dependencies) {
       Xh = dependencies.Xh,
       child_process = require('child_process'),
       which = dependencies.which;
+  var gutter_width = 5;
+  var gutter_height = 5;
+
+  function pip(workspace) {
+    // Make the main screen full size
+    // and inset the next two windows along the bottom
+    var windows = workspace.visible();
+    var screen = workspace.monitor;
+    var window_ids = Object.keys(windows);
+    if (window_ids.length < 1) {
+      return;
+    }
+    var mainId = workspace.mainWindow;
+    //if (window_ids.length == 1) {
+      windows[mainId].move(screen.x, screen.y);
+      windows[mainId].resize(screen.width, screen.height);
+      nwm.wm.focusWindow(mainId);
+    //} else {
+    if(window_ids.length > 1) {
+      // when main scale = 50, the divisor is 2
+      var mainScaleFactor = (100 / workspace.getMainWindowScale());
+      var halfHeight = Math.floor(screen.height / mainScaleFactor);
+      //var halfWidth = Math.floor(screen.width / mainScaleFactor);
+      //windows[mainId].move(screen.x, screen.y);
+      //windows[mainId].resize(screen.width, halfHeight);
+      // remove from visible
+      window_ids = window_ids.filter(function(id) { return (id != mainId); });
+      var remainHeight = screen.height - halfHeight;
+      var sliceWidth = Math.floor(screen.width / (2));
+      //var sliceWidth = screen.width 
+      window_ids.forEach(function(id, index) {
+        if(index>1) {
+          windows[id].hide();
+          return;
+        }else{
+          windows[id].move(screen.x + index * sliceWidth, screen.y + halfHeight);
+          windows[id].resize(sliceWidth, remainHeight);
+          // screen.focused_window = windows[id];
+          // nwm.wm.focusWindow(screen.focused_window);
+          //currentMonitor().currentWorkspace().rearrange();
+        }
+      });
+    }
+  }
 
   // instantiate nwm and configure it
   var nwm = new NWM();
@@ -15,9 +75,10 @@ module.exports = function(dependencies) {
   // load layouts
   var layouts = dependencies.layouts;
   nwm.addLayout('tile', layouts.tile);
-  nwm.addLayout('monocle', layouts.monocle);
+  //nwm.addLayout('monocle', layouts.monocle);
   nwm.addLayout('wide', layouts.wide);
-  nwm.addLayout('grid', layouts.grid);
+  //nwm.addLayout('grid', layouts.grid);
+  nwm.addLayout('pip', pip);
 
   // convinience functions for writing the keyboard shortcuts
   function currentMonitor() {
@@ -187,6 +248,48 @@ module.exports = function(dependencies) {
           console.log('Current', monitor.focused_window, 'next', window.id);
           monitor.focused_window = window.id;
           nwm.wm.focusWindow(monitor.focused_window);
+        }
+      }
+    },
+    {
+      key: 'o', // cycle main window
+      callback: function() {
+        var monitor = currentMonitor();
+        var workspace = monitor.currentWorkspace();
+
+        if (workspace.mainWindow && nwm.windows.exists(workspace.mainWindow)) {
+          var window = nwm.windows.get(workspace.mainWindow);
+          do {
+            var next = nwm.windows.next(window.id);
+            window = nwm.windows.get(next);
+          }
+          while (window.workspace != monitor.workspaces.current);
+          console.log('cycled Current', monitor.focused_window, 'next', window.id);
+          workspace.mainWindow = window.id;
+          monitor.focused_window = window.id;
+          nwm.wm.focusWindow(monitor.focused_window);
+          workspace.rearrange();
+        }
+      }
+    },
+    {
+      key: 'p', // cycle main window
+      callback: function() {
+        var monitor = currentMonitor();
+        var workspace = monitor.currentWorkspace();
+
+        if (workspace.mainWindow && nwm.windows.exists(workspace.mainWindow)) {
+          var window = nwm.windows.get(workspace.mainWindow);
+          do {
+            var prev = nwm.windows.prev(window.id);
+            window = nwm.windows.get(prev);
+          }
+          while (window.workspace != monitor.workspaces.current);
+          console.log('cycled Current', monitor.focused_window, 'prev', window.id);
+          workspace.mainWindow = window.id;
+          monitor.focused_window = window.id;
+          nwm.wm.focusWindow(monitor.focused_window);
+          workspace.rearrange();
         }
       }
     },
