@@ -37,7 +37,7 @@ module.exports = function(dependencies) {
     //if (window_ids.length == 1) {
       windows[mainId].move(screen.x, screen.y);
       windows[mainId].resize(screen.width, screen.height);
-      nwm.wm.focusWindow(mainId);
+      //nwm.wm.focusWindow(mainId);
     //} else {
     if(window_ids.length > 1) {
       // when main scale = 50, the divisor is 2
@@ -58,6 +58,8 @@ module.exports = function(dependencies) {
         }else{
           windows[id].move(screen.x + index * sliceWidth, screen.y + halfHeight);
           windows[id].resize(sliceWidth, remainHeight);
+          windows[id].raise();
+          //nwm.wm.focusWindow(windows[id]);
           // screen.focused_window = windows[id];
           // nwm.wm.focusWindow(screen.focused_window);
           //currentMonitor().currentWorkspace().rearrange();

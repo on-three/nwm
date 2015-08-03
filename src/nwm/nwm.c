@@ -262,7 +262,7 @@ void nwm_focus_window(Window win){
   Atom atom = XInternAtom(nwm.dpy, "WM_TAKE_FOCUS", False);
   SendEvent(nwm.dpy, win, atom);
   // also, raise the window so that the bg is shown
-//  XRaiseWindow(nwm.dpy, win);
+  //XRaiseWindow(nwm.dpy, win);
   XFlush(nwm.dpy);
   nwm.selected = win;
 }
@@ -287,6 +287,11 @@ void nwm_kill_window(Window win) {
     XSetErrorHandler(xerror);
     XUngrabServer(nwm.dpy);
   }
+}
+
+void nwm_raise_window(Window win) {
+  //XEvent ev;
+  XRaiseWindow(nwm.dpy, win);
 }
 
 void nwm_configure_window(Window win, int x, int y, int width, int height,
