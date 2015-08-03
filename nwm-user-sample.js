@@ -1,5 +1,5 @@
 /**
- * PIP Tiling (max 2 pips visible at a time)
+ * PIP Tiling (max 3 pips visible at a time)
  *
  *  +----------+----------+ +-----------+----------+
  *  |                     | |                      |
@@ -21,7 +21,7 @@ module.exports = function(dependencies) {
       Xh = dependencies.Xh,
       child_process = require('child_process'),
       which = dependencies.which;
-  var gutter_width = 20;
+  var gutter_width = 5;
   var gutter_height = 5;
 
   function pip(workspace) {
@@ -34,35 +34,23 @@ module.exports = function(dependencies) {
       return;
     }
     var mainId = workspace.mainWindow;
-    //if (window_ids.length == 1) {
-      windows[mainId].move(screen.x, screen.y);
-      windows[mainId].resize(screen.width, screen.height);
-      //nwm.wm.focusWindow(mainId);
-    //} else {
+    windows[mainId].move(screen.x, screen.y);
+    windows[mainId].resize(screen.width, screen.height);
     if(window_ids.length > 1) {
       // when main scale = 50, the divisor is 2
       var mainScaleFactor = (100 / workspace.getMainWindowScale());
-      var halfHeight = Math.floor(screen.height / mainScaleFactor);
-      //var halfWidth = Math.floor(screen.width / mainScaleFactor);
-      //windows[mainId].move(screen.x, screen.y);
-      //windows[mainId].resize(screen.width, halfHeight);
-      // remove from visible
+      var halfHeight = 2* Math.floor(screen.height / 3);
       window_ids = window_ids.filter(function(id) { return (id != mainId); });
       var remainHeight = screen.height - halfHeight - gutter_height;
-      var sliceWidth = Math.floor(screen.width / (2)) - 2 * gutter_width;
-      //var sliceWidth = screen.width 
+      var sliceWidth = Math.floor(screen.width / (3)) - 3 * gutter_width;
       window_ids.forEach(function(id, index) {
-        if(index>1) {
+        if(index>2) {
           windows[id].hide();
           return;
         }else{
           windows[id].move(screen.x + index * sliceWidth + (index+1) * gutter_width , screen.y + halfHeight);
           windows[id].resize(sliceWidth, remainHeight);
           windows[id].raise();
-          //nwm.wm.focusWindow(windows[id]);
-          // screen.focused_window = windows[id];
-          // nwm.wm.focusWindow(screen.focused_window);
-          //currentMonitor().currentWorkspace().rearrange();
         }
       });
     }
