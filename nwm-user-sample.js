@@ -36,6 +36,11 @@ module.exports = function(dependencies) {
     var mainId = workspace.mainWindow;
     windows[mainId].move(screen.x, screen.y);
     windows[mainId].resize(screen.width, screen.height);
+    windows[mainId].raise();
+
+    var monitor = currentMonitor();
+    var workspace = monitor.currentWorkspace();
+
     if(window_ids.length > 1) {
       // when main scale = 50, the divisor is 2
       var mainScaleFactor = (100 / workspace.getMainWindowScale());
@@ -43,16 +48,28 @@ module.exports = function(dependencies) {
       window_ids = window_ids.filter(function(id) { return (id != mainId); });
       var remainHeight = screen.height - halfHeight - gutter_height;
       var sliceWidth = Math.floor(screen.width / (3)) - 3 * gutter_width;
-      window_ids.forEach(function(id, index) {
-        if(index>2) {
-          windows[id].hide();
-          return;
-        }else{
-          windows[id].move(screen.x + index * sliceWidth + (index+1) * gutter_width , screen.y + halfHeight);
-          windows[id].resize(sliceWidth, remainHeight);
-          windows[id].raise();
-        }
-      });
+
+      console.log('PIP Mainwindow id: ', mainId);
+      var next_id = nwm.windows.next(mainId);
+      var pips = 0;
+      while(next_id!=mainId && windows[next_id]) {
+            //var next = nwm.windows.next(mainId);
+            var window = nwm.windows.get(next_id);
+            console.log('PIP next id: ', next_id);
+            if(window.workspace != monitor.workspaces.current)
+            {
+              continue;
+            }
+            if(pips<=2){
+              windows[next_id].move(screen.x + pips * sliceWidth + (pips+1) * gutter_width , screen.y + halfHeight);
+              windows[next_id].resize(sliceWidth, remainHeight);
+              windows[next_id].raise();
+              pips++;
+            }else{
+              //windows[next_id].hide();
+            }
+            next_id = nwm.windows.next(next_id);
+      }
     }
   }
 
