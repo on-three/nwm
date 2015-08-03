@@ -21,7 +21,7 @@ module.exports = function(dependencies) {
       Xh = dependencies.Xh,
       child_process = require('child_process'),
       which = dependencies.which;
-  var gutter_width = 5;
+  var gutter_width = 20;
   var gutter_height = 5;
 
   function pip(workspace) {
@@ -48,15 +48,15 @@ module.exports = function(dependencies) {
       //windows[mainId].resize(screen.width, halfHeight);
       // remove from visible
       window_ids = window_ids.filter(function(id) { return (id != mainId); });
-      var remainHeight = screen.height - halfHeight;
-      var sliceWidth = Math.floor(screen.width / (2));
+      var remainHeight = screen.height - halfHeight - gutter_height;
+      var sliceWidth = Math.floor(screen.width / (2)) - 2 * gutter_width;
       //var sliceWidth = screen.width 
       window_ids.forEach(function(id, index) {
         if(index>1) {
           windows[id].hide();
           return;
         }else{
-          windows[id].move(screen.x + index * sliceWidth, screen.y + halfHeight);
+          windows[id].move(screen.x + index * sliceWidth + (index+1) * gutter_width , screen.y + halfHeight);
           windows[id].resize(sliceWidth, remainHeight);
           windows[id].raise();
           //nwm.wm.focusWindow(windows[id]);
