@@ -32,7 +32,6 @@ Monitor.prototype.addWindow = function(window) {
   }
   // set the focused window ?
   this.focusedWindow = window;
-  // handling floating windows ??
 
   // listen to changes to fullscreen
   window.on('change:fullscreen', function(model, value) {

@@ -23,6 +23,7 @@ module.exports = function(dependencies) {
       which = dependencies.which;
   var gutter_width = 5;
   var gutter_height = 5;
+  var placement = [2, 0, 1];
 
   function pip(workspace) {
     // Make the main screen full size
@@ -61,7 +62,8 @@ module.exports = function(dependencies) {
               continue;
             }
             if(pips<=2){
-              windows[next_id].move(screen.x + pips * sliceWidth + (pips+1) * gutter_width , screen.y + halfHeight);
+              var p = placement[pips]
+              windows[next_id].move(screen.x + p * sliceWidth + (p+1) * gutter_width , screen.y + halfHeight);
               windows[next_id].resize(sliceWidth, remainHeight);
               windows[next_id].raise();
               pips++;
@@ -81,12 +83,12 @@ module.exports = function(dependencies) {
 
   // load layouts
   var layouts = dependencies.layouts;
-  nwm.addLayout('tile', layouts.tile);
-  //nwm.addLayout('monocle', layouts.monocle);
-  nwm.addLayout('wide', layouts.wide);
-  //nwm.addLayout('grid', layouts.grid);
+  nwm.addLayout('monocle', layouts.monocle);
   nwm.addLayout('pip', pip);
-
+  nwm.addLayout('grid', layouts.grid);
+  nwm.addLayout('tile', layouts.tile);
+  nwm.addLayout('wide', layouts.wide);
+  
   // convinience functions for writing the keyboard shortcuts
   function currentMonitor() {
     return nwm.monitors.get(nwm.monitors.current);
@@ -274,6 +276,7 @@ module.exports = function(dependencies) {
           console.log('cycled Current', monitor.focused_window, 'next', window.id);
           workspace.mainWindow = window.id;
           monitor.focused_window = window.id;
+          nwm.windows.get(workspace.mainWindow).show();
           nwm.wm.focusWindow(monitor.focused_window);
           workspace.rearrange();
         }
@@ -295,6 +298,7 @@ module.exports = function(dependencies) {
           console.log('cycled Current', monitor.focused_window, 'prev', window.id);
           workspace.mainWindow = window.id;
           monitor.focused_window = window.id;
+          nwm.windows.get(workspace.mainWindow).show();
           nwm.wm.focusWindow(monitor.focused_window);
           workspace.rearrange();
         }
