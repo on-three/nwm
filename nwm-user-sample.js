@@ -25,6 +25,101 @@ module.exports = function(dependencies) {
   var gutter_height = 5;
   var placement = [2, 0, 1];
 
+  // Listen on a UNIX socket for remote commands
+  var rpc = require('/usr/lib/node_modules/node-json-rpc');
+
+  var options = {
+    // int port of rpc server, default 5080 for http or 5433 for https
+    port: 5080,
+    // string domain name or ip of rpc server, default '127.0.0.1'
+    host: '127.0.0.1',
+    // string with default path, default '/'
+    path: '/',
+    // boolean false to turn rpc checks off, default true
+    strict: false
+  };
+
+  // Create a server object with options
+  var serv = new rpc.Server(options);
+
+  var nextLayout = function(event) {
+    var monitor = currentMonitor();
+    var workspace = monitor.currentWorkspace();
+    workspace.layout = nwm.nextLayout(workspace.layout);
+    // monocle hides windows in the current workspace, so unhide them
+    monitor.go(monitor.workspaces.current);
+    workspace.rearrange();
+  };
+
+  var cycleLayout = function() {
+    var monitor = currentMonitor();
+    var workspace = monitor.currentWorkspace();
+
+    if (workspace.mainWindow && nwm.windows.exists(workspace.mainWindow)) {
+      var window = nwm.windows.get(workspace.mainWindow);
+      do {
+        var prev = nwm.windows.prev(window.id);
+        window = nwm.windows.get(prev);
+      }
+      while (window.workspace != monitor.workspaces.current);
+      console.log('cycled Current', monitor.focused_window, 'prev', window.id);
+      workspace.mainWindow = window.id;
+      monitor.focused_window = window.id;
+      nwm.windows.get(workspace.mainWindow).show();
+      nwm.wm.focusWindow(monitor.focused_window);
+      workspace.rearrange();
+    }
+  };
+
+  var cycleLayoutBack = function() {
+    var monitor = currentMonitor();
+    var workspace = monitor.currentWorkspace();
+
+    if (workspace.mainWindow && nwm.windows.exists(workspace.mainWindow)) {
+      var window = nwm.windows.get(workspace.mainWindow);
+      do {
+        var next = nwm.windows.next(window.id);
+        window = nwm.windows.get(next);
+      }
+      while (window.workspace != monitor.workspaces.current);
+      console.log('cycled Current', monitor.focused_window, 'next', window.id);
+      workspace.mainWindow = window.id;
+      monitor.focused_window = window.id;
+      nwm.windows.get(workspace.mainWindow).show();
+      nwm.wm.focusWindow(monitor.focused_window);
+      workspace.rearrange();
+    }
+  };
+
+  // Add your methods
+  serv.addMethod('nextLayout', function (para, callback) {
+    var error, result;
+    nextLayout();
+    result = true;
+    callback(error, result);
+  });
+
+  serv.addMethod('cycleLayout', function (para, callback) {
+    var error, result;
+    cycleLayout();
+    result = true;
+    callback(error, result);
+  });
+
+  serv.addMethod('cycleLayoutBack', function (para, callback) {
+    var error, result;
+    cycleLayoutBack();
+    result = true;
+    callback(error, result);
+  });
+
+  // Start the server
+serv.start(function (error) {
+  // Did server start succeed ?
+  if (error) throw error;
+  else console.log('Server running ...');
+});
+
   function pip(workspace) {
     // Make the main screen full size
     // and inset the next two windows along the bottom
@@ -34,6 +129,7 @@ module.exports = function(dependencies) {
     if (window_ids.length < 1) {
       return;
     }
+
     var mainId = workspace.mainWindow;
     windows[mainId].move(screen.x, screen.y);
     windows[mainId].resize(screen.width, screen.height);
@@ -75,6 +171,8 @@ module.exports = function(dependencies) {
     }
   }
 
+
+
   // instantiate nwm and configure it
   var nwm = new NWM();
 
@@ -88,7 +186,7 @@ module.exports = function(dependencies) {
   nwm.addLayout('grid', layouts.grid);
   nwm.addLayout('tile', layouts.tile);
   nwm.addLayout('wide', layouts.wide);
-  
+
   // convinience functions for writing the keyboard shortcuts
   function currentMonitor() {
     return nwm.monitors.get(nwm.monitors.current);
@@ -174,14 +272,7 @@ module.exports = function(dependencies) {
     },
     {
       key: 'space', // space switches between layout modes
-      callback: function(event) {
-        var monitor = currentMonitor();
-        var workspace = monitor.currentWorkspace();
-        workspace.layout = nwm.nextLayout(workspace.layout);
-        // monocle hides windows in the current workspace, so unhide them
-        monitor.go(monitor.workspaces.current);
-        workspace.rearrange();
-      }
+      callback: nextLayout
     },
     {
       key: ['h', 'F10'], // shrink master area
@@ -262,47 +353,11 @@ module.exports = function(dependencies) {
     },
     {
       key: 'o', // cycle main window
-      callback: function() {
-        var monitor = currentMonitor();
-        var workspace = monitor.currentWorkspace();
-
-        if (workspace.mainWindow && nwm.windows.exists(workspace.mainWindow)) {
-          var window = nwm.windows.get(workspace.mainWindow);
-          do {
-            var next = nwm.windows.next(window.id);
-            window = nwm.windows.get(next);
-          }
-          while (window.workspace != monitor.workspaces.current);
-          console.log('cycled Current', monitor.focused_window, 'next', window.id);
-          workspace.mainWindow = window.id;
-          monitor.focused_window = window.id;
-          nwm.windows.get(workspace.mainWindow).show();
-          nwm.wm.focusWindow(monitor.focused_window);
-          workspace.rearrange();
-        }
-      }
+      callback: cycleLayoutBack
     },
     {
       key: 'p', // cycle main window
-      callback: function() {
-        var monitor = currentMonitor();
-        var workspace = monitor.currentWorkspace();
-
-        if (workspace.mainWindow && nwm.windows.exists(workspace.mainWindow)) {
-          var window = nwm.windows.get(workspace.mainWindow);
-          do {
-            var prev = nwm.windows.prev(window.id);
-            window = nwm.windows.get(prev);
-          }
-          while (window.workspace != monitor.workspaces.current);
-          console.log('cycled Current', monitor.focused_window, 'prev', window.id);
-          workspace.mainWindow = window.id;
-          monitor.focused_window = window.id;
-          nwm.windows.get(workspace.mainWindow).show();
-          nwm.wm.focusWindow(monitor.focused_window);
-          workspace.rearrange();
-        }
-      }
+      callback: cycleLayout
     },
     {
       key: 'q', // quit
