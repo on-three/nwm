@@ -290,6 +290,13 @@ NWM.prototype.nextLayout = function(name) {
   return (keys[pos + 1] ? keys[pos + 1] : keys[0]);
 };
 
+NWM.prototype.setLayout = function(name) {
+  var keys = Object.keys(this.layouts);
+  var pos = keys.indexOf(name);
+  // Wrap around the array
+  return (keys[pos] ? keys[pos] : keys[0]);
+};
+
 // Keyboard shortcut operations
 // ----------------------------
 

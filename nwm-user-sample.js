@@ -51,6 +51,15 @@ module.exports = function(dependencies) {
     workspace.rearrange();
   };
 
+  var setLayout = function(name) {
+    var monitor = currentMonitor();
+    var workspace = monitor.currentWorkspace();
+    workspace.layout = nwm.setLayout(name);
+    // monocle hides windows in the current workspace, so unhide them
+    monitor.go(monitor.workspaces.current);
+    workspace.rearrange();
+  };
+
   var cycleLayout = function() {
     var monitor = currentMonitor();
     var workspace = monitor.currentWorkspace();
@@ -95,6 +104,14 @@ module.exports = function(dependencies) {
   serv.addMethod('nextLayout', function (para, callback) {
     var error, result;
     nextLayout();
+    result = true;
+    callback(error, result);
+  });
+
+  serv.addMethod('setLayout', function (para, callback) {
+    var error, result;
+    var layoutName = para[0];
+    setLayout(layoutName);
     result = true;
     callback(error, result);
   });
@@ -181,7 +198,7 @@ serv.start(function (error) {
 
   // load layouts
   var layouts = dependencies.layouts;
-  nwm.addLayout('monocle', layouts.monocle);
+  nwm.addLayout('mono', layouts.monocle);
   nwm.addLayout('pip', pip);
   nwm.addLayout('grid', layouts.grid);
   nwm.addLayout('tile', layouts.tile);
